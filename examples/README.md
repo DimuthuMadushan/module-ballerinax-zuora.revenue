@@ -2,13 +2,12 @@
 
 The `ballerinax/zuora.revenue` connector provides practical examples illustrating usage in various scenarios.
 
-[//]: # (TODO: Add examples)
-1. 
-2. 
+1. [Report signed URLs](./report_signed_urls/report_signed_urls.md) - List the reports created on a date and fetch a signed download URL for each.
+2. [Revenue program run](./revenue_program_run/revenue_program_run.md) - Confirm a revenue program exists, submit it and poll the resulting job until it finishes.
 
 ## Prerequisites
 
-[//]: # (TODO: Add prerequisites)
+Each example needs a Zuora Revenue API user. Follow the [Setup guide](https://github.com/ballerina-platform/module-ballerinax-zuora.revenue/blob/main/ballerina/README.md#setup-guide) to obtain the username, password, role and client name, and create a `Config.toml` in the example's directory.
 
 ## Running an example
 

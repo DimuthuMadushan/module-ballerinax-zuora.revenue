@@ -5,12 +5,10 @@ name = "zuora.revenue"
 version = "@toml.version@"
 license = ["Apache-2.0"]
 authors = ["Ballerina"]
-keywords = [] # TODO: Add keywords
-# icon = "icon.png" # TODO: Add icon
+keywords = ["Vendor/Zuora", "Area/Finance & Accounting", "Type/Connector"]
+icon = "icon.png"
 repository = "https://github.com/ballerina-platform/module-ballerinax-zuora.revenue"
 
 [build-options]
 observabilityIncluded = true
 
-[platform.java21]
-graalvmCompatible = true

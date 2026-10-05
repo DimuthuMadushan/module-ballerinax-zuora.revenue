@@ -1,0 +1,2286 @@
+openapi: 3.0.0
+info:
+  title: Revenue API Reference
+  description: This is the client for the Zuora Revenue REST API, used to upload data, track uploads and
+    staging errors, download BI view data and reports, transfer accounting batches, and submit and monitor
+    revenue programs and data collection jobs.
+  version: '2025-08-06'
+  x-logo:
+    url: https://www.zuora.com/wp-content/uploads/2016/10/zuora-dev-logo-api-ref.svg
+servers:
+- url: https://yourHost/api/integration
+tags:
+- name: Authentication
+  description: 'The Authentication operation is the authentication layer when you integrate
+
+    data with Zuora Revenue APIs. Use this operation to authenticate and generate a token
+
+    that can be valid for a specific time period. The token is required for all the subsequent
+
+    API calls. By default, a token will be valid for 30 minutes before it expires. If the issued
+
+    token expires, call this operation again with valid credentials to get a new token.
+
+
+
+    To acquire the token, you must provide the user role and client name as well as basic
+
+    authorization in the HTTP request header. An example of basic authorization header is as follows:
+
+
+    `Basic c3lzYWRtaW46fsDFsgsV2cHJvJTEyMw==`
+
+
+
+    An example of the returned authentication token is as follows:
+
+
+    ```eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2V
+
+    ybmFtZSI6InZpbm90aC5iYWFsYWppIiwiaXNzIjoiUkV```
+
+    '
+- name: Adapter
+  description: 'The Adapter operation is used to retrieve field mapping information in an upload template
+    definitions. The field mapping information determines the mapping between the staging field names
+    and the label names in the upload file.
+
+    '
+- name: BI Views v1
+  description: 'The BI Views V1 operations are used to download data for Zuora Revenue standard BI views.
+
+
+    **Note:**
+
+    * Only the standard Zuora Revenue BI views are supported.
+
+    * If the data volume to be processed exceeds 100k records per query, it is recommended to use (BI
+    Views V2)[/other-api/revenue/tag/BI-Views-v2/] operations.
+
+    '
+- name: BI Views v2
+  description: '
+
+    Starting from version 36.008.00, the BI Views V2 operations are provided to download data from the
+    standard BI views. Compared with the previous version, BI Views V1, this new version has the following
+    enhancements:
+
+
+    * In addition to CSV format, data can also be downloaded in a compressed format, gzip.
+
+    * The number of rows on each downloaded page is increased. In the CSV format, each page can contain
+    up to 10,000 rows. In the gzip format, each page can contain up to 20,000 rows.
+
+    * The data volume of up to 5 million rows per query can be supported by using the BI Views V2 operations.
+
+    * A continuation token is introduced to accelerate data download for multiple pages. After a request
+    is made for the first page, a continuation token is returned in the response header. Meanwhile, subsequent
+    pages are cached by the system. Using the continuation token  in the subsequent requests will make
+    the system to retrieve data from the cache instead of re-executing the query against the database.
+
+    * An operation to query the row count is introduced. You can know the number of rows to be returned
+    before the actual download.
+
+
+    For more information about the BI Views V2 operations, such as new feature introduction, suggested
+    pattern to consume these APIs,  and sample codes, see <a href="https://docs.zuora.com?resourceId=revenue-integration-service-bi-views"
+    target="_blank">Integration service (BI Views V2)</a> in Zuora Revenue Knowledge Center.
+
+    '
+- name: File Upload
+  description: 'The File Upload operations are used to upload large volumes of data as a CSV file in the
+    HTTP body to Zuora Revenue and to get status information about the file upload.
+
+
+    If the data volume is in the range of 40k-60k records per file per request, the Upload file operation
+    can process  the data quickly.
+
+    A unique request ID is generated after the file is successfully received, which can be used  to query
+    the upload status in the Get file upload status operation.
+
+    '
+- name: Inbound
+  description: 'The Inbound operations are used to upload data in the CSV format to Zuora Revenue. As
+    a prerequisite,  the upload template definitions must be present in Zuora Revenue. Then, you specify
+    the template name,  file name, authentication token, and the CSV data in HTTP body of the inbound
+    operations to upload data. It is recommended to use the Create upload operation for the CSV file than
+    contains less than 20k lines.
+
+
+    After the data is uploaded to the pre-stage table, Zuora Revenue scheduler will load the CSV content
+    to corresponding staging tables in Zuora Revenue. You can query the upload status by using the Get
+    upload status operation.
+
+    '
+- name: Reports
+  description: 'The Reports operations are used to download reports that are generated in Zuora Revenue.
+
+    '
+- name: Revenue Jobs
+  description: 'The Revenue Jobs operations are used to submit the following programs with Revenue APIs:
+
+    * RevPro3.0 Data Collection Master
+
+    * RevPro3.0 Event Process
+
+    * RevPro3.0 Event Process Master
+
+    * Revpro3.0 Accounting Transfer Master
+
+    * RevPro3.0 Transfer Batch for Org
+
+
+    No matter what program is to be started, two path parameters are required for the (Submit a program
+    with specified parameters)[/other-api/revenue/operation/POST_SubmitRevenueJob/] operation.  One is
+    the program ID and the other is the organization ID. Operations are also provided to retrieve the
+    program ID and organization ID.
+
+
+    For an example of using API to submit the Revpro3.0 Accounting Transfer Master program, see <a href="https://docs.zuora.com?resourceId=revenue-api-best-practice-submit">Us
+    API to submit a predefined program</a> in the Knowledge Center.
+
+    '
+- name: Stage Error
+  description: 'The Stage Error operation is used to get the list of records that contain errors in the
+    Zuora Revenue staging tables for transactions or events.
+
+    '
+- name: Transfer Accounting
+  description: 'The Transfer Accounting operations are used to support outbound data integrations. You  can
+    use these operations to query the transfer batch information and to update the transfer batch status.
+
+    '
+- name: Transfer Accounting Files
+  description: 'The Transfer Accounting Files operation is used to download the transfer accounting  data
+    in a CSV file from Zuora Revenue for a specific transfer batch.
+
+    '
+- name: Data Collection
+  description: 'The Data Collection operations are used to submit the data collection jobs and query the
+    status of the submitted jobs.
+
+    '
+paths:
+  /v1/authenticate:
+    post:
+      tags:
+      - Authentication
+      summary: Create authentication
+      description: 'Authenticates and gets the Json Web Token to push and pull data from your Zuora Revenue
+        instance.
+
+        '
+      operationId: createAuthentication
+      parameters:
+      - name: role
+        description: The Zuora Revenue user role that the token is generated for, for example the API
+          role
+        in: header
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          default: API Role
+      - name: clientname
+        description: The name of the client (application) that connects to Zuora Revenue
+        in: header
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          default: Default
+      responses:
+        '200':
+          description: Authentication token is returned
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/AuthenticationResponse'
+      security:
+      - basicAuth: []
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X POST --header "role: API Role" --header "clientname: Default" --header "Authorization:
+          Basic WklOR0FQSToxffN4JKaOPw==" "https://yourHost/api/integration/v1/authenticate"
+
+          '
+  /v1/fileupload/status/{fileRequestId}:
+    get:
+      tags:
+      - File Upload
+      summary: Get file upload status
+      description: Gets the status information about the specified file upload request.
+      operationId: getFileUploadStatus
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: fileRequestId
+        in: path
+        description: The request ID of the file upload to be queried
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: The status information is returned for the requested file upload
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/FileUploadStatusResponse'
+        '204':
+          description: The status information cannot be retrieved for the specified request ID.
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X GET --header "token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlpJTkdBUEkiLCJpc3MiOiJSRVZQUk8gMy4wIFdlYnNlcnZpY2VzIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImV4cCI6MTUwNDc0NTIxMywiaWF0IjoxNTA0NzQzNDEzLCJuYmYiOjE1MDQ3NDM0MTMsImNsaWVudG5hbWUiOiJEZWZhdWx0In0.umtarSxRc0KUld5RZkrZMwzIypQYdwFYBP5-d1Cbi1Q"  "https://yourHost/api/integration/v1/fileupload/status/12333"
+
+          '
+  /v1/upload/file:
+    post:
+      tags:
+      - File Upload
+      summary: Upload file
+      description: 'Upload the event or transaction data in a CSV file to Zuora Revenue in UTF-8.
+
+
+        **Note:** It is recommended to have up to 60k lines per request in this operation.
+
+        '
+      operationId: uploadFile
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: templatename
+        in: header
+        description: Name of the upload template that you want to use
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        description: Must be set to "multipart/form-data"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - multipart/form-data
+        x-ballerina-name: contentType
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UploadFileBody'
+        required: true
+        description: Multipart form with the CSV file to upload and its upload options
+      responses:
+        '200':
+          description: The file is uploaded to Zuora Revenue
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/UploadFileResponse'
+        '400':
+          description: Exception occurs. Please contact Zuora Revenue Support.
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/UploadFileErrorResponse'
+      x-code-samples:
+      - lang: Curl
+        source: "curl -X POST \\\n  https://yourHost/api/integration/v1/upload/file \\\n  -H 'cache-control:\
+          \ no-cache' \\\n  -H 'content-type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW'\
+          \ \\\n  -H 'templatename: sample_upload_template.csv' \\\n  -H 'token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlpJTkdBUEkiLCJpc3MiOiJSRVZQUk8gMy4wIFdlYnNlcnZpY2VzIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImV4cCI6MTUwNDc0NTIxMywiaWF0IjoxNTA0NzQzNDEzLCJuYmYiOjE1MDQ3NDM0MTMsImNsaWVudG5hbWUiOiJEZWZhdWx0In0.umtarSxRc0KUld5RZkrZMwzIypQYdwFYBP5-d1Cbi1Q'\
+          \ \\\n  -F 'file=@/Users/user1/Downloads/Upload Template MO.csv'\n"
+  /v1/csv/upload/status:
+    get:
+      tags:
+      - Inbound
+      summary: Get upload status
+      description: Gets the status information about the Create upload operation.
+      operationId: getUploadStatus
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: id
+        in: query
+        description: The request ID of the uploaded file for which the status information is being queried
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: The status information is returned for the requested upload
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/UploadStatusResponse'
+        '400':
+          description: The status information cannot be retrieved for the specified request ID.
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/UploadStatusErrorResponse'
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X GET --header "token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlpJTkdBUEkiLCJpc3MiOiJSRVZQUk8gMy4wIFdlYnNlcnZpY2VzIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImV4cCI6MTUwNDc0NTIxMywiaWF0IjoxNTA0NzQzNDEzLCJuYmYiOjE1MDQ3NDM0MTMsImNsaWVudG5hbWUiOiJEZWZhdWx0In0.umtarSxRc0KUld5RZkrZMwzIypQYdwFYBP5-d1Cbi1Q"  "https://yourHost/api/integration/v1/csv/upload/status?id=10002"
+
+          '
+  /v1/csv/upload:
+    post:
+      tags:
+      - Inbound
+      summary: Create upload
+      description: 'Uploads the transaction, events, or bundle configuration data as a CSV (text/plain)
+        file with UTF-8 encoding.
+
+
+        **Note:** Up to 20k lines per request can be supported by this operation. If the CSV file contains
+        more than 20k lines, it is recommended to use the (Upload file)[/other-api/revenue/operation/POST_UploadFile]
+        operation.
+
+        '
+      operationId: createUpload
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: templatename
+        in: header
+        description: The name of the upload template that you want to use
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: filename
+        in: header
+        description: The unique file name to populate the data in the Zuora Revenue UI
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: array
+              items:
+                type: string
+                description: The actual data to be uploaded.
+        required: true
+        description: CSV lines of transaction, event or bundle configuration data to upload
+      responses:
+        '200':
+          description: Data is uploaded to the staging tables in Zuora Revenue
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/CreateUploadResponse'
+        '400':
+          description: Error occurs when data is being uploaded to Zuora Revenue staging tables.
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/CreateUploadErrorResponse'
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X POST --header "Content-Type: text/plain" --header "token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlpJTkdBUEkiLCJpc3MiOiJSRVZQUk8gMy4wIFdlYnNlcnZpY2VzIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImV4cCI6MTUwNDc0NTIxMywiaWF0IjoxNTA0NzQzNDEzLCJuYmYiOjE1MDQ3NDM0MTMsImNsaWVudG5hbWUiOiJEZWZhdWx0In0.umtarSxRc0KUld5RZkrZMwzIypQYdwFYBP5-d1Cbi1Q"
+          --header "templatename: TEST TEMPLATE" --header "filename: TEST.csv" -d "\"Batch Id\",\"Process
+          Flag\",\"Created By\",\"Creation Date\",\"Type\",\"Business Unit\",\"Atr48\",\"Atr8\",\"Atr60\",\"Ct
+          Line Num\",\"Doc Num\",\"Doc Line Num\",\"Doc Line Id\",\"Doc Date\",\"Start Date\",\"End Date\",\"Date1\",\"Ct
+          Mod Date\",\"Cust Num\",\"Cstmr Nm\",\"Atr45\",\"Curr\",\"F Cur\",\"F Ex Rate\",\"G Ex Rate\",\"Item
+          Num\",\"Prod Ctgry\",\"Inv Num\",\"Inv Line Num\",\"Inv Line Id\",\"Orig Inv Line Id\",\"Orig
+          So Line Id\",\"Inv Date\",\"Atr58\",\"Ord Qty\",\"Unit List Prc\",\"Ext Lst Prc\",\"Unit Sell
+          Prc\",\"Ext Sll Prc\",\"Atr9\",\"Inv Qty\",\"Return Flag\",\"Ret Qty\",\"Def Segments\",\"Rev
+          Segments\",\"Al Account\",\"Ar Account\",\"Ca Account\",\"Cv Eligible Flag\",\"Atr50\",\"Atr51\",\"Atr52\",\"Atr53\",\"Atr54\",\"Atr55\",\"Atr56\",\"Atr46\",\"Prod
+          Class\",\"Prod Fmly\",\"Prod Ln\",\"Atr49\",\"Atr14\",\"Atr15\",\"Atr12\",\"Atr13\",\"Atr47\",\"Sob
+          Id\",\"Credit Rule\",\"Num1\",\"Num2\",\"Date2\",\"Date3\",\"Atr10\",\"Atr11\",\"Atr57\",\"Atr5\",\"Atr6\""
+          "https://yourHost/api/integration/v1/csv/upload"
+
+          '
+  /v1/journal/batch/status/{batchId}:
+    put:
+      tags:
+      - Transfer Accounting
+      summary: Update transfer batch status
+      description: Updates the transfer batch status to `Transferred` in Zuora Revenue.
+      operationId: updateTransferBatchStatus
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: batchId
+        in: path
+        description: The batch ID of the transfer accounting batch
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: The status of the transfer batch is changed to `Transferred`
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/TransferBatchStatusResponse'
+        '400':
+          description: Only the batch in Ready TO Transfer status can be updated.
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/TransferBatchStatusErrorResponse'
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X PUT --header "token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlpJTkdBUEkiLCJpc3MiOiJSRVZQUk8gMy4wIFdlYnNlcnZpY2VzIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImV4cCI6MTUwNDc0ODE4MywiaWF0IjoxNTA0NzQ2MzgzLCJuYmYiOjE1MDQ3NDYzODMsImNsaWVudG5hbWUiOiJEZWZhdWx0In0.k1usDPkgldj-OG9-ga-jn5B2Axx-HG4D0chytx5JPIg"  "https://yourHost/api/integration/v1/journal/batch/status/10110"
+
+          '
+  /v1/journal/batch/{batchid}/{pagenum}:
+    get:
+      tags:
+      - Transfer Accounting
+      summary: Get transfer batch
+      description: 'Downloads the general ledger (GL) transfer batch data for the specified batch ID and
+        page number.
+
+        For more information, see <a href="https://docs.zuora.com?resourceId=revenue-api-best-practice"
+        target="_blank">Best practice for using Revenue APIs</a>.
+
+        '
+      operationId: getTransferBatch
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: batchid
+        in: path
+        description: The batch ID of the transfer accounting batch
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      - name: pagenum
+        in: path
+        description: The number of page to be downloaded
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      - name: pagesize
+        in: query
+        description: The number of records to be downloaded per request. The default is 1000 and the maximum
+          is 10000
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: The GL transfer batch data for the requested batch ID and page is returned
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/TransferBatchStatusResponse'
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X GET --header "token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlpJTkdBUEkiLCJpc3MiOiJSRVZQUk8gMy4wIFdlYnNlcnZpY2VzIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImV4cCI6MTUwNDc0ODE4MywiaWF0IjoxNTA0NzQ2MzgzLCJuYmYiOjE1MDQ3NDYzODMsImNsaWVudG5hbWUiOiJEZWZhdWx0In0.k1usDPkgldj-OG9-ga-jn5B2Axx-HG4D0chytx5JPIg"  "https://yourHost/api/integration/v1/journal/batch/10000/1?Output=CSV"
+
+          '
+  /v1/biviews/{viewName}:
+    get:
+      tags:
+      - BI Views v1
+      summary: Get BI Views
+      description: 'Retrieves the data from a BI view during the specified time period in a CSV file.
+
+        Use the `fromDate` and `toDate` parameters to specify the time period for which
+
+        data is to be queried. You can also use the `count` parameter to get the row count
+
+        for the queried bi view data.
+
+        '
+      operationId: getBiViews
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: viewName
+        in: path
+        description: Name of the BI view
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: clientId
+        in: query
+        description: The ID of the Zuora Revenue application user
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          default: 1
+      - name: fromDate
+        in: query
+        description: The date from which the data query begins
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: '2016-07-26T00:00:00'
+      - name: toDate
+        in: query
+        description: The date on which the data query ends
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: '2016-07-26T00:00:00'
+      - name: pagenum
+        in: query
+        description: The number of page to download
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          default: 1
+      - name: pagesize
+        in: query
+        description: The number of records to be downloaded per request. The default is 1000 and the maximum
+          is 10000
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+      - name: count
+        in: query
+        description: 'Set to `true` to get the row count of the BI view for the specified time period.
+
+
+          **Note:** Setting this parameter to `true` might cause timeout errors for large volume scenarios
+
+          '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+      responses:
+        '200':
+          description: BI view data is returned in CSV format
+        '204':
+          description: No rows are found for the specified time period.
+        '400':
+          description: Error is returned. For example, the user ID is invalid, or the BI view does not
+            exist.
+        '401':
+          description: The authentication token has expired. To solve this problem, re-generate a token
+            by using the Authentication operation.
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X GET --header "token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlpJTkdBUEkiLCJpc3MiOiJSRVZQUk8gMy4wIFdlYnNlcnZpY2VzIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImV4cCI6MTUwNDc0ODE4MywiaWF0IjoxNTA0NzQ2MzgzLCJuYmYiOjE1MDQ3NDYzODMsImNsaWVudG5hbWUiOiJEZWZhdWx0In0.k1usDPkgldj-OG9-ga-jn5B2Axx-HG4D0chytx5JPIg"  "https://yourHost/api/integration/v1/biviews/BI3_RC_POB?clientId=1&fromDate=2016-07-26T00%3A00%3A00&toDate=2016-07-26T00%3A00%3A00&pagenum=1"
+
+          '
+    post:
+      tags:
+      - BI Views v1
+      summary: Get BI View data for selected fields
+      description: Downloads the data of selected fields from a BI view for the specified time period
+        as a CSV or gzip file. The field names are passed in the request body.
+      operationId: getBiViewsForFields
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: viewName
+        in: path
+        description: Name of the BI view
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: clientId
+        in: query
+        description: The ID of the Zuora Revenue application user
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          default: 1
+      - name: fromDate
+        in: query
+        description: The date from which the data query begins
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: '2016-07-26T00:00:00'
+      - name: toDate
+        in: query
+        description: The date on which the data query ends
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: '2016-07-26T00:00:00'
+      - name: pagenum
+        in: query
+        description: The number of page to download
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          default: 1
+      - name: count
+        in: query
+        description: 'Set to `true` to get the row count of the BI view for the specified time period.
+
+          **Note:** Setting this parameter to `true` might cause timeout errors for large volume scenarios
+
+          '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              description: A list of field names to be selected from the BI view.
+              items:
+                type: string
+        required: true
+        description: List of field names to be selected from the BI view
+      responses:
+        '200':
+          description: BI view data is returned in CSV format
+        '204':
+          description: No rows are found for the given time period.
+        '400':
+          description: Error is returned. For example, Invalid User ID.
+        '401':
+          description: The authentication token has expired. To solve this problem, re-generate a token
+            by using the Authentication operation.
+  /v1/journal/list:
+    get:
+      tags:
+      - Transfer Accounting
+      summary: Get transfer batch list
+      description: Gets a list of the transfer accounting batches that are available in Zuora Revenue.
+      operationId: listTransferBatches
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The list of available transfer accounting batches is returned
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/TransferBatchListResponse'
+        '204':
+          description: No GL Transfer batches in Ready to Transfer status are available.
+        '400':
+          description: Error occurs when fetching the GL batch list.
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X GET --header "token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlpJTkdBUEkiLCJpc3MiOiJSRVZQUk8gMy4wIFdlYnNlcnZpY2VzIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImV4cCI6MTUwNDc0ODE4MywiaWF0IjoxNTA0NzQ2MzgzLCJuYmYiOjE1MDQ3NDYzODMsImNsaWVudG5hbWUiOiJEZWZhdWx0In0.k1usDPkgldj-OG9-ga-jn5B2Axx-HG4D0chytx5JPIg"  "https://yourHost/api/integration/v1/journal/list"
+
+          '
+  /v1/download/transferbatchfile/{batchId}:
+    get:
+      tags:
+      - Transfer Accounting Files
+      summary: Get transfer batch file
+      description: 'Downloads the GL transfer batch files from Zuora Revenue for the specified batch ID.
+
+
+
+        **Note:**
+
+
+        * Only the transfer accounting files that are created in the last 48 hours are available for download.
+
+
+        * The maximum downloadable file size is 1 GB.
+
+        '
+      operationId: getTransferBatchFile
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: batchId
+        in: path
+        description: The batch ID of the transfer accounting batch
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: The GL transfer batch file for the requested batch ID is returned
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/TransferBatchFileResponse'
+        '204':
+          description: The batch file is not generated for the batch ID or the batch file is not found.
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X GET --header "token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlpJTkdBUEkiLCJpc3MiOiJSRVZQUk8gMy4wIFdlYnNlcnZpY2VzIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImV4cCI6MTUwNDc0ODE4MywiaWF0IjoxNTA0NzQ2MzgzLCJuYmYiOjE1MDQ3NDYzODMsImNsaWVudG5hbWUiOiJEZWZhdWx0In0.k1usDPkgldj-OG9-ga-jn5B2Axx-HG4D0chytx5JPIg"  "https://yourHost/api/integration/v1/download/transferbatchfile/10110"
+
+          '
+  /v1/reports/list:
+    get:
+      tags:
+      - Reports
+      summary: Get report list
+      description: Gets a list of available reports that are created on a specified date.
+      operationId: listReports
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: createddate
+        in: query
+        description: The date when reports are created
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date
+      responses:
+        '200':
+          description: The list of reports created on the specified date is returned
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/ReportListResponse'
+        '400':
+          description: The specified date format is invalid.
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/ReportListErrorResponse'
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X GET --header "token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlpJTkdBUEkiLCJpc3MiOiJSRVZQUk8gMy4wIFdlYnNlcnZpY2VzIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImV4cCI6MTUwNDc0ODE4MywiaWF0IjoxNTA0NzQ2MzgzLCJuYmYiOjE1MDQ3NDYzODMsImNsaWVudG5hbWUiOiJEZWZhdWx0In0.k1usDPkgldj-OG9-ga-jn5B2Axx-HG4D0chytx5JPIg"  "https://yourHost/api/integration/v1/reports/list?createddate=01-JAN-2012"
+
+          '
+  /v1/reports/download/{filename}:
+    get:
+      tags:
+      - Reports
+      summary: Download a report
+      description: "Downloads a specific report from Zuora Revenue.\n\n **Note:**\n\n * Only the report\
+        \ files that are created in the last 48 hours are available for download.\n\n * The maximum downloadable\
+        \ report file size is 1 GB.\n\n * If the report file size exceeds 1 GB, use the (Get report data)[/other-api/revenue/operation/GET_ReportsURL]\
+        \ operation to download the report from a signed URL.\n"
+      operationId: downloadReport
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: filename
+        in: path
+        description: The name of the report file to be downloaded
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The report file is returned
+        '204':
+          description: The specified file does not exist in Zuora Revenue.
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X GET --header "token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlpJTkdBUEkiLCJpc3MiOiJSRVZQUk8gMy4wIFdlYnNlcnZpY2VzIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImV4cCI6MTUwNDc0NTIxMywiaWF0IjoxNTA0NzQzNDEzLCJuYmYiOjE1MDQ3NDM0MTMsImNsaWVudG5hbWUiOiJEZWZhdWx0In0.umtarSxRc0KUld5RZkrZMwzIypQYdwFYBP5-d1Cbi1Q"  "https://yourHost/api/integration/v1/reports/download/10002.csv"
+
+          '
+  /v2/reports/signedurl/{reportId}:
+    get:
+      tags:
+      - Reports
+      summary: Get report signed URL
+      description: "Generates a signed URL from Zuora Revenue to download the report with the specified\
+        \ report ID. The returned URL will be valid for 30 minutes.\n\n **Note:**\n\n This API operation\
+        \ is available in Zuora Revenue 37.002.00.00 and later.\n The advantage of this operation is that\
+        \ it can provide a URL to download the report without the restriction on the file size.\n"
+      operationId: getReportSignedUrl
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: reportId
+        in: path
+        description: The ID of the report to be downloaded. You can get the report ID in the (Get report
+          list)[/other-api/revenue/operation/GET_ReportList] response
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: The URL to download the report file. The signed URL will be valid for 30 minutes
+            from the time when it is generated
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/ReportSignedUrlResponse'
+        '400':
+          description: The report ID is invalid.
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/ReportSignedUrlErrorResponse'
+        '404':
+          description: The specified report ID is not found.
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/ReportNotFoundResponse'
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X GET --header "token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlpJTkdBUEkiLCJpc3MiOiJSRVZQUk8gMy4wIFdlYnNlcnZpY2VzIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImV4cCI6MTUwNDc0NTIxMywiaWF0IjoxNTA0NzQzNDEzLCJuYmYiOjE1MDQ3NDM0MTMsImNsaWVudG5hbWUiOiJEZWZhdWx0In0.umtarSxRc0KUld5RZkrZMwzIypQYdwFYBP5-d1Cbi1Q"  "https://yourHost/api/api/integration/v2/reports/signedurl/10002"
+
+          '
+  /v1/stage/error/{errortype}:
+    get:
+      tags:
+      - Stage Error
+      summary: Get staging error
+      description: Gets the information about transaction staging errors or event staging errors.
+      operationId: getStagingErrors
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: errortype
+        in: path
+        description: The type of errors that you want to retrieve
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - transaction
+          - event
+      responses:
+        '200':
+          description: Staging errors of the specified type are returned
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/StagingErrorResponse'
+        '204':
+          description: No record is found for the error type specified in the path parameter.
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X GET --header "token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlpJTkdBUEkiLCJpc3MiOiJSRVZQUk8gMy4wIFdlYnNlcnZpY2VzIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImV4cCI6MTUwNDc0ODE4MywiaWF0IjoxNTA0NzQ2MzgzLCJuYmYiOjE1MDQ3NDYzODMsImNsaWVudG5hbWUiOiJEZWZhdWx0In0.k1usDPkgldj-OG9-ga-jn5B2Axx-HG4D0chytx5JPIg"  "https://yourHost/api/integration/v1/stage/error/transaction"
+
+          '
+  /v1/upload/mapping:
+    get:
+      tags:
+      - Adapter
+      summary: Get field mapping
+      description: Gets the field mapping information in the upload template definitions for transactions,
+        events, or bundle configuration from Zuora Revenue.
+      operationId: getFieldMapping
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: templatename
+        in: query
+        description: Name of the upload template that contains the field mapping information
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Field mapping data is returned
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/FieldMappingResponse'
+        '400':
+          description: Error fetching the mapping details.
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X GET --header "token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlpJTkdBUEkiLCJpc3MiOiJSRVZQUk8gMy4wIFdlYnNlcnZpY2VzIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImV4cCI6MTUwNDc0ODE4MywiaWF0IjoxNTA0NzQ2MzgzLCJuYmYiOjE1MDQ3NDYzODMsImNsaWVudG5hbWUiOiJEZWZhdWx0In0.k1usDPkgldj-OG9-ga-jn5B2Axx-HG4D0chytx5JPIg"
+          "https://yourHost/api/integration/v1/upload/mapping?templatename=TEST"
+
+          '
+  /v2/biviews-status:
+    get:
+      tags:
+      - BI Views v2
+      summary: Get all BI view task status
+      description: Gets the status information about all BI view related tasks.
+      operationId: listBiViewTasks
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The task details are returned
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/BiViewTaskListResponse'
+        '204':
+          description: No records are found.
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X GET https://ui_url/api/integration/v2/biviews-status -H ''token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6IlNZU0FETUlOIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImNsaWVudG5hbWUiOiJEZWZhdWx0IiwiY2xpZW50aWQiOjEsImlhdCI6MTU1ODMyODMzNSwibmJmIjoxNTU4MzI4MzM1LCJpc3MiOiJadW9yYS1SSUEiLCJleHAiOjE1NTgzMzAxMzV9.xz3O4QRR6qgT-2HgBJn9yJ9YBaXwWhl3d7ohrduTogI''
+
+          '
+  /v2/biviews-status/{taskId}:
+    get:
+      tags:
+      - BI Views v2
+      summary: Get active task details
+      description: Gets the details of all active tasks for the specified continuation token.
+      operationId: getBiViewTask
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: taskId
+        in: path
+        description: The continuation token that was returned in the initial request
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The details of active tasks that are associated with the continuation token are
+            returned
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/BiViewTaskDetailsResponse'
+        '204':
+          description: No record is found for the specified continuation token.
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X GET https://ui_url/api/integration/v2/biviews-status/098bda64-a53d-4e6c-960d-ffd2293b19bb
+          -H ''token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6IlNZU0FETUlOIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImNsaWVudG5hbWUiOiJEZWZhdWx0IiwiY2xpZW50aWQiOjEsImlhdCI6MTU1ODMyODMzNSwibmJmIjoxNTU4MzI4MzM1LCJpc3MiOiJadW9yYS1SSUEiLCJleHAiOjE1NTgzMzAxMzV9.xz3O4QRR6qgT-2HgBJn9yJ9YBaXwWhl3d7ohrduTogI''
+
+          '
+    delete:
+      tags:
+      - BI Views v2
+      summary: Cancel BI view download tasks
+      description: Cancels the active tasks that are associated with the specified continuation token
+        in the path.
+      operationId: cancelBiViewTask
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: taskId
+        in: path
+        description: The continuation token that is associated with the tasks to be canceled
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The tasks associated with the specified continuation token are canceled
+        '204':
+          description: The specified continuation token is not found.
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X DELETE https://ui_url/api/integration/v2/biviews-status/098bda64-a53d-4e6c-960d-ffd2293b19bb
+          -H ''token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6IlNZU0FETUlOIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImNsaWVudG5hbWUiOiJEZWZhdWx0IiwiY2xpZW50aWQiOjEsImlhdCI6MTU1ODMzMDIxMCwibmJmIjoxNTU4MzMwMjEwLCJpc3MiOiJadW9yYS1SSUEiLCJleHAiOjE1NTgzMzIwMTB9.Sr2oIxp7XWSJSy9bARfr7nkFvAmMbdhMaNBv9IR52Fo''
+
+          '
+  /v2/biviews/count/{tmplName}:
+    get:
+      tags:
+      - BI Views v2
+      summary: Get BI view row count
+      description: 'Gets the row count of a BI view.
+
+
+
+        **Note:** This operation starts a count query against the database for a full table scan.
+
+        It is helful to know the number of rows that will be returned before data download.
+
+        However, if the data volume is large, this operation might result in timeout responses.
+
+        '
+      operationId: getBiViewRowCount
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: tmplName
+        in: path
+        description: Name of the BI view
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: clientId
+        in: query
+        description: The ID of the Zuora Revenue application user
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          default: 1
+      - name: fromDate
+        in: query
+        description: The date from which the data query begins
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: '2016-07-26T00:00:00'
+      - name: toDate
+        in: query
+        description: The date on which the data query ends
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: '2018-07-26T00:00:00'
+      responses:
+        '200':
+          description: The row count of the specified BI view is returned
+        '400':
+          description: Error occurs. For example, the user ID is invalid, or the specified BI view does
+            not exist.
+        '401':
+          description: The provided authentication token has expired. Send the Authentication request
+            again to get a new token.
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X GET https://ui_url/api/integration/v2/biviews/count/BI3_ACCT_TYPE?=&clientId=1&fromDate=2016-07-26&toDate=2018-07-26
+          -H ''token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6IlNZU0FETUlOIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImNsaWVudG5hbWUiOiJEZWZhdWx0IiwiY2xpZW50aWQiOjEsImlhdCI6MTU1ODMzMDIxMCwibmJmIjoxNTU4MzMwMjEwLCJpc3MiOiJadW9yYS1SSUEiLCJleHAiOjE1NTgzMzIwMTB9.Sr2oIxp7XWSJSy9bARfr7nkFvAmMbdhMaNBv9IR52Fo
+
+          '
+  /v2/biviews/{viewName}:
+    get:
+      tags:
+      - BI Views v2
+      summary: Download BI view
+      description: 'Downloads data from a BI view in a CSV or gzip file.
+
+
+
+        If the data volume is large, it is recommended to use this operation to download Page 1 first.
+
+        A continuation token will be returned in the response header. After that, provide the continuation
+
+        token in this operation to download the subsequent pages.
+
+        '
+      operationId: downloadBiView
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: continuation-token
+        in: header
+        description: 'The continuation token that was returned in the initial query for Page 1.
+
+
+
+          **Note:** The continuation token is returned after Page 1 of the BI view is downloaded.
+
+          To download the subsequent pages, you must specify the continuation token in this operation
+
+          for Page 2 onwards
+
+          '
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+        x-ballerina-name: continuationToken
+      - name: viewName
+        in: path
+        description: Name of the BI view
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: clientId
+        in: query
+        description: The ID of the Zuora Revenue application user
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          default: 1
+      - name: fromDate
+        in: query
+        description: The date from which the data query begins
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: '2016-07-26T00:00:00'
+      - name: toDate
+        in: query
+        description: The date on which the data query ends
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: '2018-07-26T00:00:00'
+      - name: pagenum
+        in: query
+        description: The number of page to be downloaded
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          default: 1
+      - name: pageSize
+        in: query
+        description: 'The number of rows on each page to be downloaded.
+
+
+
+          * For CSV format, the valid range is 1 - 10,000 with default 1,000.
+
+          * For gzip format, the valid range is 1 - 20,000 with default 1,000.
+
+
+
+          **Note:** Any value that is greater than 20,000 is invalid
+
+          '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+      - name: outputType
+        in: query
+        description: The output format of the download
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          enum:
+          - csv
+          - gzip
+          default: gzip
+      responses:
+        '200':
+          description: The queried BI view data is returned as a CSV or gzip file
+          headers:
+            continuation-token:
+              description: Continuation token to be used for subsequent page requests.
+              style: simple
+              explode: false
+              schema:
+                type: string
+            content-type:
+              description: The content type of the response. text/csv or application/gzip
+              style: simple
+              explode: false
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '204':
+          description: No record is found for the specified BI view.
+        '400':
+          description: Error occurs. For example, the user ID is invalid, or the requested page is not
+            cached yet.
+        '401':
+          description: The provided authentication token has expired. Send the Authentication request
+            again to get a new token.
+        '404':
+          description: The requested page does not exist. The number of total pages and the number of
+            total rows are returned.
+  /v2/biviews/{tmplName}/describe-columns:
+    get:
+      tags:
+      - BI Views v2
+      summary: Get column list
+      description: Gets a list of columns that are contained in a BI view.
+      operationId: listBiViewColumns
+      parameters:
+      - name: token
+        in: header
+        description: The valid authentication token that is generated by the Authentication operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: tmplName
+        in: path
+        description: Name of the BI view
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The list of columns is returned for the requested BI view
+        '400':
+          description: Error occurs. For example, the BI view does not exist.
+        '401':
+          description: The provided authentication token has expired. Send the Authentication request
+            again to get a new token.
+      x-code-samples:
+      - lang: Curl
+        source: 'curl -X GET https://ui_url/api/integration/v2/biviews/BI3_ACCT_TYPE/describe-columns
+          -H ''token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6IlNZU0FETUlOIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImNsaWVudG5hbWUiOiJEZWZhdWx0IiwiY2xpZW50aWQiOjEsImlhdCI6MTU1ODMzMDIxMCwibmJmIjoxNTU4MzMwMjEwLCJpc3MiOiJadW9yYS1SSUEiLCJleHAiOjE1NTgzMzIwMTB9.Sr2oIxp7XWSJSy9bARfr7nkFvAmMbdhMaNBv9IR52Fo''
+
+          '
+  /v1/job/collection/template:
+    post:
+      tags:
+      - Data Collection
+      summary: Submit data collection job
+      description: 'Submit a data collection job based on the specified RC template.
+
+
+
+        After the data collection job is submitted, the following validations are applied:
+
+
+
+        * The specified RC template name must be valid.
+
+        * For multi-organization tenants, the the organization ID is required and must be valid.
+
+        * If there are more than 2 data collection jobs in Running/Pending/Incompatible status for the
+        specified organization, the API request will be rejected with error message returned.
+
+        '
+      operationId: createCollectionJob
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevenueJobRequest'
+        required: true
+        description: Data collection job request based on a revenue collection template
+      responses:
+        '200':
+          description: The request is submitted successfully and the job ID is returned. You can use the
+            returned ID to query the job status later
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/RevenueJobResponse'
+        '401':
+          description: The provided authentication token is invalid or the token has expired. Send the
+            Authentication request again to get a new token.
+        '403':
+          description: You are not authorized to access this endpoint. Please contact Zuora Revenue Support.
+  /v1/job/collection/template/{jobId}:
+    get:
+      tags:
+      - Data Collection
+      summary: Get data collection job details
+      description: Get the status of the data collection job.
+      operationId: getCollectionJob
+      parameters:
+      - name: jobId
+        in: path
+        description: The ID of the data collection job that you want to query. This is the ID that is
+          returned when you submitted the data collection job
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: The status of the data collection job is returned
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/RevenueJobDetail'
+        '401':
+          description: The provided authentication token has expired. Send the Authentication request
+            again to get a new token.
+        '403':
+          description: You are not authorized to access this endpoint. Please contact Zuora Revenue Support.
+  /v1/programs:
+    get:
+      tags:
+      - Revenue Jobs
+      summary: Get list of available programs and program parameters
+      description: 'Retrieves a list of programs that can be started with Revenue APIs and the program
+        parameters that you can specify.
+
+        '
+      operationId: listPrograms
+      responses:
+        '200':
+          description: A list of available programs is returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramDetailsResponse'
+        '400':
+          description: The input parameter is invalid.
+  /v1/revenue-orgs:
+    get:
+      tags:
+      - Revenue Jobs
+      summary: Get list of available organizations
+      description: 'Retrieves the list of organizations that are set up in Zuora Revenue.
+
+        '
+      operationId: listRevenueOrgs
+      responses:
+        '200':
+          description: A list of available organizations is returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramDetailsResponse'
+        '400':
+          description: The input parameter is invalid.
+  /v1/{orgId}/programs/{programId}/submit:
+    post:
+      tags:
+      - Revenue Jobs
+      summary: Submit a program with specified parameters
+      description: 'Submits a program in Zuora Revenue and returns the job ID.
+
+        '
+      operationId: submitProgram
+      parameters:
+      - name: programId
+        in: path
+        description: The ID of the program that is to be submitted in Zuora Revenue. You can get the program
+          ID by using the "Get list of available programs and program parameters" operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      - name: orgId
+        in: path
+        description: The ID of the organization for which the program is to be submitted. You can get
+          the organization ID by using the "Get list of available organizations" operation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      requestBody:
+        description: 'An array that contains the parameter values to be used for the program. For each
+          parameter, you need to specify the parameter ID, sequence, and desired value
+
+          You can get the parameter name, ID, and sequence by using the "Get list of available programs
+          and program parameters" operation.'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitJobRequest'
+        required: true
+      responses:
+        '200':
+          description: The job status is returned with the job ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatusResponse'
+        '400':
+          description: The specified program is not supported.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitJobFailureResponse'
+        '403':
+          description: The specified organization ID does not match the organization assigned to the current
+            user role.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitJobFailureResponse'
+  /v1/{orgId}/jobs/{jobId}:
+    get:
+      tags:
+      - Revenue Jobs
+      summary: Get the job status
+      description: 'Retrieves the status of a submitted job in Zuora Revenue.
+
+        '
+      operationId: getJobStatus
+      parameters:
+      - name: jobId
+        in: path
+        description: The ID of the Zuora Revenue job whose status is queried. This is the job ID returned
+          when the program was submitted
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      - name: orgId
+        in: path
+        description: The ID of the organization that is specified when the job is submitted
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: The job status is returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatusResponse'
+        '400':
+          description: The input parameter is invalid.
+components:
+  schemas:
+    ProgramDetailsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramDetail'
+    BiViewTaskListResult:
+      type: object
+      properties:
+        stale:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityQueueStatus'
+        draining:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityQueueStatus'
+        active:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityQueueStatus'
+        completed:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityQueueStatus'
+    ProgramParameter:
+      type: object
+      properties:
+        sequence:
+          type: string
+        name:
+          type: string
+        id:
+          type: integer
+        type:
+          type: string
+        mandatory:
+          type: string
+    SubmitJobFailureResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        error:
+          type: string
+          enum:
+          - OrgId does not match the Org assigned to the role
+          - This Program is not supported at the moment
+    SubmitJobRequest:
+      type: object
+      properties:
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParameterList'
+    RevenueJobResponse:
+      properties:
+        message:
+          type: string
+        success:
+          type: boolean
+    Journal:
+      type: object
+      properties:
+        crtd_dt:
+          type: string
+          format: date-time
+          x-ballerina-name: crtdDt
+        updt_by:
+          type: string
+          x-ballerina-name: updtBy
+        crtd_by:
+          type: string
+          x-ballerina-name: crtdBy
+        report_id:
+          type: integer
+          format: int32
+          x-ballerina-name: reportId
+        name:
+          type: string
+        id:
+          type: integer
+          format: int32
+        updt_dt:
+          type: string
+          format: date-time
+          x-ballerina-name: updtDt
+        client_id:
+          type: integer
+          x-ballerina-name: clientId
+        status:
+          type: string
+    JobStatusResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/JobStatus'
+        success:
+          type: boolean
+    ActivityQueueStatusQueryConfig:
+      type: object
+      properties:
+        filter_param:
+          allOf:
+          - $ref: '#/components/schemas/ActivityQueueStatusQueryConfigFilterParam'
+          x-ballerina-name: filterParam
+        object_name:
+          type: string
+          x-ballerina-name: objectName
+    ProgramDetail:
+      type: object
+      properties:
+        program_name:
+          type: string
+          x-ballerina-name: programName
+        program_id:
+          type: string
+          x-ballerina-name: programId
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramParameter'
+    ActiveTasks:
+      type: object
+      properties:
+        activity_tracker:
+          allOf:
+          - $ref: '#/components/schemas/ActiveActivityTracker'
+          x-ballerina-name: activityTracker
+        metric:
+          type: string
+        accumulate:
+          type: integer
+        query_config:
+          allOf:
+          - $ref: '#/components/schemas/ActiveQueryConfig'
+          x-ballerina-name: queryConfig
+        task_id:
+          type: string
+          x-ballerina-name: taskId
+        message:
+          type: string
+        status:
+          type: string
+    RevenueJobDetail:
+      properties:
+        data:
+          $ref: '#/components/schemas/RevenueJobDetailData'
+        success:
+          type: boolean
+    UploadStatusErrorResponse:
+      properties:
+        Result:
+          type: string
+        message:
+          type: string
+          description: Default error message
+          default: No data found
+        status:
+          type: string
+          description: Error Response
+          default: Error
+    ActiveQueryConfig:
+      type: object
+      properties:
+        object_name:
+          type: string
+          x-ballerina-name: objectName
+        filter_params:
+          allOf:
+          - $ref: '#/components/schemas/ActiveQueryConfigFilterParams'
+          x-ballerina-name: filterParams
+    TransferBatchStatusErrorResponse:
+      properties:
+        status:
+          type: string
+          description: Response Status
+          default: Error
+        message:
+          type: string
+          description: 0 row(s) updated. Only the batch in Ready TO Transfer status can be updated.
+    ParameterList:
+      type: object
+      properties:
+        sequence:
+          type: integer
+          default: 1
+        parameter_value:
+          type: string
+          x-ballerina-name: parameterValue
+        parameter_id:
+          type: integer
+          default: 1002
+          x-ballerina-name: parameterId
+    CreateUploadErrorResponse:
+      properties:
+        message:
+          type: string
+          description: Error Message
+          default: Error loading Data into Staging Area
+        result:
+          $ref: '#/components/schemas/CreateUploadResult'
+        status:
+          type: string
+          description: Error Response
+          default: Error
+    ReportSignedUrlErrorResponse:
+      properties:
+        Message:
+          type: string
+          description: Response Status
+          default: The file name does not exist. Please check the file extension.
+        Result:
+          type: string
+          description: Response Status
+          default: None
+        status:
+          type: string
+          description: Response Status
+          default: Error
+    ActiveActivityTracker:
+      type: object
+      properties:
+        initated_time:
+          type: string
+          x-ballerina-name: initatedTime
+        last_activity:
+          type: string
+          x-ballerina-name: lastActivity
+        elapsed_time:
+          type: string
+          x-ballerina-name: elapsedTime
+    ReportListErrorResponse:
+      properties:
+        Message:
+          type: string
+          description: Response Status
+          default: Invalid date format for 30-11-1993
+        status:
+          type: string
+          description: Error Status
+          default: Error
+    UploadStatusResult:
+      type: object
+      properties:
+        id:
+          type: integer
+        message:
+          type: string
+          default: Data Received
+        client_id:
+          type: integer
+          x-ballerina-name: clientId
+        status:
+          type: string
+          default: Successfully Uploaded
+    StaleTasks:
+      type: string
+    ReportSignedUrlResponse:
+      properties:
+        signed_url:
+          description: A valid signed URL to download the report.
+        success:
+          type: boolean
+          description: Indicates whether the operation succeeded.
+    ReportListResponse:
+      properties:
+        Message:
+          type: string
+          description: Response Message
+        Result:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportList'
+        status:
+          type: string
+          description: Response Status
+          default: Success
+    StatusTaskState:
+      properties:
+        accumulate:
+          type: integer
+        activity_tracker:
+          type: array
+          items: {}
+    AuthenticationResponse:
+      properties:
+        Message:
+          type: string
+          description: Token
+          default: Token Generated
+        status:
+          type: string
+          description: Response Status
+          default: success
+    UploadFileErrorResponse:
+      properties:
+        message:
+          type: string
+          description: Response Message
+          default: Exception occurred. Please contact Zuora Revenue Support
+        status:
+          type: string
+          description: Response Status
+          default: Error
+    ReportNotFoundResponse:
+      properties:
+        error:
+          type: string
+          description: Error message.
+        success:
+          type: boolean
+          description: Indicates whether the operation succeeded.
+    JobStatus:
+      type: object
+      properties:
+        error_message:
+          type: string
+          x-ballerina-name: errorMessage
+        crtd_dt:
+          type: string
+          format: datetime
+          x-ballerina-name: crtdDt
+        actual_start_date:
+          type: string
+          format: datetime
+          x-ballerina-name: actualStartDate
+        crtd_by:
+          type: string
+          x-ballerina-name: crtdBy
+        id:
+          type: integer
+        updt_dt:
+          type: string
+          format: datetime
+          x-ballerina-name: updtDt
+        sec_atr_val:
+          type: integer
+          x-ballerina-name: secAtrVal
+        status:
+          type: string
+    CreateUploadResult:
+      type: object
+      properties:
+        id:
+          type: integer
+        message:
+          type: string
+        client_id:
+          type: integer
+          x-ballerina-name: clientId
+        status:
+          type: string
+    UploadStatus:
+      type: object
+      properties:
+        file_request_id:
+          type: integer
+          x-ballerina-name: fileRequestId
+        file_log:
+          type: string
+          x-ballerina-name: fileLog
+    RevenueJobRequest:
+      properties:
+        rc_template_name:
+          type: string
+          description: Name of the RC template that is defined in Zuora Revenue (**Policies > RC Grouping
+            Template**).
+        org_id:
+          type: integer
+          description: The organization ID that can be found in Zuora Revenue (**Setups > Application
+            > Organization**). This field is required only for multi-organization tenants.
+          default: 0
+    RevenueJobDetailData:
+      type: object
+      properties:
+        crtd_dt:
+          type: string
+          x-ballerina-name: crtdDt
+        actual_start_date:
+          type: string
+          x-ballerina-name: actualStartDate
+        crtd_by:
+          type: string
+          x-ballerina-name: crtdBy
+        id:
+          type: integer
+        updt_dt:
+          type: string
+          x-ballerina-name: updtDt
+        status:
+          type: string
+          enum:
+          - Running
+          - Error
+          - Pending
+          - Completed
+          - Warning
+          - Failed
+          - Cancelled
+          - Terminated
+          - Incompatible
+    DrainingTasks:
+      type: string
+    ActivityQueueStatusQueryConfigFilterParam:
+      type: object
+      properties:
+        fromDate:
+          type: string
+          format: date-time
+        toDate:
+          type: string
+          format: date-time
+    UploadFileBody:
+      required:
+      - file
+      type: object
+      properties:
+        file:
+          type: string
+          description: The path to the CSV file that is to be uploaded
+          format: binary
+    ActiveQueryConfigFilterParams:
+      type: object
+      properties:
+        fromDate:
+          type: string
+        toDate:
+          type: string
+    StageError:
+      type: object
+      properties:
+        processed_flag:
+          type: string
+          x-ballerina-name: processedFlag
+        upload_id:
+          type: string
+          x-ballerina-name: uploadId
+        updt_by:
+          type: string
+          x-ballerina-name: updtBy
+        so_num:
+          type: string
+          x-ballerina-name: soNum
+        so_line_id:
+          type: string
+          x-ballerina-name: soLineId
+        so_line_num:
+          type: string
+          x-ballerina-name: soLineNum
+        updt_dt:
+          type: string
+          format: date-time
+          x-ballerina-name: updtDt
+        type:
+          type: string
+        sec_atr_val:
+          type: string
+          x-ballerina-name: secAtrVal
+        client_id:
+          type: integer
+          x-ballerina-name: clientId
+        crtd_dt:
+          type: string
+          format: date-time
+          x-ballerina-name: crtdDt
+        crtd_by:
+          type: string
+          x-ballerina-name: crtdBy
+        err_msg:
+          type: string
+          x-ballerina-name: errMsg
+        inv_line_num:
+          type: string
+          x-ballerina-name: invLineNum
+        inv_line_id:
+          type: string
+          x-ballerina-name: invLineId
+        id:
+          type: integer
+    ActivityQueueStatusActivityTracker:
+      type: object
+      properties:
+        initated_time:
+          type: string
+          format: date-time
+          x-ballerina-name: initatedTime
+        last_activity:
+          type: string
+          format: date-time
+          x-ballerina-name: lastActivity
+        elapsed_time:
+          type: string
+          x-ballerina-name: elapsedTime
+    StagingErrorResponse:
+      properties:
+        Result:
+          type: array
+          items:
+            $ref: '#/components/schemas/StageError'
+        status:
+          type: string
+          description: Response Status
+          default: Success
+    CompletedTasks:
+      type: string
+    FileUploadStatusResponse:
+      properties:
+        Result:
+          type: array
+          items:
+            $ref: '#/components/schemas/UploadStatus'
+        message:
+          type: string
+          description: Response Message
+          default: Data Staged Successfully
+        status:
+          type: string
+          description: Response Status
+          default: Success
+    BiViewTaskListResponse:
+      properties:
+        result:
+          $ref: '#/components/schemas/BiViewTaskListResult'
+        status:
+          type: string
+          description: Response Status
+          default: Success
+    UploadMapping:
+      type: object
+      properties:
+        upload_id:
+          type: integer
+          x-ballerina-name: uploadId
+        data_type:
+          type: string
+          x-ballerina-name: dataType
+        col_name:
+          type: string
+          x-ballerina-name: colName
+        id:
+          type: integer
+        label:
+          type: string
+        client_id:
+          type: integer
+          x-ballerina-name: clientId
+        seq:
+          type: integer
+    FieldMappingResponse:
+      properties:
+        Dateformat:
+          type: string
+          description: Response Status
+          default: DD-MON-YYYY
+        Mapping:
+          type: array
+          items:
+            $ref: '#/components/schemas/UploadMapping'
+    UploadStatusResponse:
+      properties:
+        result:
+          $ref: '#/components/schemas/UploadStatusResult'
+        status:
+          type: string
+          description: Response Response
+          default: Success
+    UploadFileResponse:
+      properties:
+        message:
+          type: string
+          description: Response Message
+          default: File received successfully
+        status:
+          type: string
+          description: Response Status
+          default: Success
+    BiViewTaskDetailsResponse:
+      properties:
+        active:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActiveTasks'
+        completed:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompletedTasks'
+        draining:
+          type: array
+          items:
+            $ref: '#/components/schemas/DrainingTasks'
+        stale:
+          type: array
+          items:
+            $ref: '#/components/schemas/StaleTasks'
+    TransferBatchStatusResponse:
+      properties:
+        status:
+          type: string
+          description: Response Status
+          default: Success
+    ActivityQueueStatus:
+      type: object
+      properties:
+        activity_tracker:
+          allOf:
+          - $ref: '#/components/schemas/ActivityQueueStatusActivityTracker'
+          x-ballerina-name: activityTracker
+        metric:
+          type: integer
+        accumulate:
+          type: integer
+        query_config:
+          allOf:
+          - $ref: '#/components/schemas/ActivityQueueStatusQueryConfig'
+          x-ballerina-name: queryConfig
+        task_id:
+          type: string
+          x-ballerina-name: taskId
+        message:
+          type: string
+        status:
+          type: string
+    CreateUploadResponse:
+      properties:
+        message:
+          type: string
+          description: Response Message
+          default: Data Staged Successfully
+        result:
+          $ref: '#/components/schemas/CreateUploadResult'
+        status:
+          type: string
+          description: Response Status
+          default: Success
+    ReportList:
+      type: object
+      properties:
+        rep_desc:
+          type: string
+          x-ballerina-name: repDesc
+        layout_name:
+          type: string
+          x-ballerina-name: layoutName
+        rep_name:
+          type: string
+          x-ballerina-name: repName
+        file_name:
+          type: string
+          x-ballerina-name: fileName
+        id:
+          type: integer
+        category:
+          type: string
+        report_date:
+          type: string
+          format: date-time
+          x-ballerina-name: reportDate
+        status:
+          type: string
+    TransferBatchFileResponse:
+      properties:
+        active:
+          type: array
+          description: Response Status
+          items: {}
+    TransferBatchListResponse:
+      properties:
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/Journal'
+        status:
+          type: string
+          description: Response Status
+          default: Success
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
