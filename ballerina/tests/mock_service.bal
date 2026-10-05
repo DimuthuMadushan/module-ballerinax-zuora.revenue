@@ -15,6 +15,7 @@
 // under the License.
 
 import ballerina/http;
+import ballerina/mime;
 
 listener http:Listener ep0 = new (9090);
 
@@ -169,7 +170,7 @@ service / on ep0 {
     # + filename - The report file name
     # + return - The report content
     resource function get v1/reports/download/[string filename](@http:Header string token) returns http:Ok|http:NoContent {
-        return http:OK;
+        return <http:Ok>{body: "REP_NAME,STATUS\nRevenue Waterfall,Completed\n".toBytes(), mediaType: "application/octet-stream"};
     }
 
     # List reports
@@ -255,7 +256,7 @@ service / on ep0 {
     # + tmplName - The BI view name
     # + return - The columns of the BI view
     resource function get v2/biviews/[string tmplName]/describe\-columns(@http:Header string token) returns http:Ok|http:BadRequest|http:Unauthorized {
-        return http:OK;
+        return <http:Ok>{body: {"columns": [{"name": "RC_ID", "type": "NUMBER"}, {"name": "CUSTOMER_NAME", "type": "VARCHAR2"}]}};
     }
 
     # Get BI view row count
@@ -267,7 +268,7 @@ service / on ep0 {
     # + toDate - The end date of the query
     # + return - The row count
     resource function get v2/biviews/count/[string tmplName](@http:Header string token, int clientId = 1, string fromDate = "2016-07-26T00:00:00", string toDate = "2018-07-26T00:00:00") returns http:Ok|http:BadRequest|http:Unauthorized {
-        return http:OK;
+        return <http:Ok>{body: {"count": 1250, "viewName": tmplName}};
     }
 
     # List BI view tasks
@@ -359,9 +360,19 @@ service / on ep0 {
     # + request - The CSV payload
     # + return - The upload is staged
     resource function post v1/csv/upload(@http:Header string token, @http:Header string templatename, @http:Header string filename, http:Request request) returns CreateUploadResponse|http:BadRequest {
+        string|http:ClientError csv = request.getTextPayload();
+        if csv is http:ClientError {
+            return http:BAD_REQUEST;
+        }
+        int lineCount = 1;
+        foreach string:Char c in csv {
+            if c == "\n" {
+                lineCount += 1;
+            }
+        }
         return {
             message: "Data Staged Successfully",
-            result: {id: 88, message: "Data Received", clientId: 1, status: "Successfully Uploaded"},
+            result: {id: 88, message: string `Data Received, ${lineCount} lines`, clientId: 1, status: "Successfully Uploaded"},
             status: "Success"
         };
     }
@@ -381,7 +392,15 @@ service / on ep0 {
     # + request - The multipart request
     # + return - The file is received
     resource function post v1/upload/file(@http:Header string token, @http:Header string templatename, http:Request request) returns UploadFileResponse|http:BadRequest {
-        return {message: "File received successfully", status: "Success"};
+        mime:Entity[]|http:ClientError parts = request.getBodyParts();
+        if parts is http:ClientError || parts.length() == 0 {
+            return http:BAD_REQUEST;
+        }
+        byte[]|mime:Error content = parts[0].getByteArray();
+        if content is mime:Error {
+            return http:BAD_REQUEST;
+        }
+        return {message: string `File received successfully, ${content.length()} bytes`, status: "Success"};
     }
 
     # Update transfer batch status

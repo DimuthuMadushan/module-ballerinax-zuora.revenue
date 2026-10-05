@@ -173,9 +173,9 @@ paths:
       operationId: createAuthentication
       parameters:
       - name: role
+        in: header
         description: The Zuora Revenue user role that the token is generated for, for example the API
           role
-        in: header
         required: true
         style: simple
         explode: false
@@ -183,8 +183,8 @@ paths:
           type: string
           default: API Role
       - name: clientname
-        description: The name of the client (application) that connects to Zuora Revenue
         in: header
+        description: The name of the client (application) that connects to Zuora Revenue
         required: true
         style: simple
         explode: false
@@ -396,10 +396,8 @@ paths:
         content:
           text/plain:
             schema:
-              type: array
-              items:
-                type: string
-                description: The actual data to be uploaded.
+              type: string
+              description: The actual data to be uploaded.
         required: true
         description: CSV lines of transaction, event or bundle configuration data to upload
       responses:
@@ -625,6 +623,11 @@ paths:
       responses:
         '200':
           description: BI view data is returned in CSV format
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
         '204':
           description: No rows are found for the specified time period.
         '400':
@@ -723,6 +726,11 @@ paths:
       responses:
         '200':
           description: BI view data is returned in CSV format
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
         '204':
           description: No rows are found for the given time period.
         '400':
@@ -885,6 +893,11 @@ paths:
       responses:
         '200':
           description: The report file is returned
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
         '204':
           description: The specified file does not exist in Zuora Revenue.
       x-code-samples:
@@ -1195,6 +1208,11 @@ paths:
       responses:
         '200':
           description: The row count of the specified BI view is returned
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
         '400':
           description: Error occurs. For example, the user ID is invalid, or the specified BI view does
             not exist.
@@ -1387,6 +1405,11 @@ paths:
       responses:
         '200':
           description: The list of columns is returned for the requested BI view
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
         '400':
           description: Error occurs. For example, the BI view does not exist.
         '401':

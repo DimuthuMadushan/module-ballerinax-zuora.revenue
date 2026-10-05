@@ -65,7 +65,7 @@ public isolated client class Client {
         string resourcePath = string `/v1/upload/file`;
         map<string|string[]> httpHeaders = http:getHeaderMap(headers);
         http:Request request = new;
-        mime:Entity[] bodyParts = check createBodyParts(check jsondata:toJson(payload).ensureType());
+        mime:Entity[] bodyParts = check createBodyParts(payload);
         request.setBodyParts(bodyParts);
         return self.clientEp->post(resourcePath, request, httpHeaders);
     }
@@ -87,7 +87,7 @@ public isolated client class Client {
     # + headers - Headers to be sent with the request 
     # + payload - CSV lines of transaction, event or bundle configuration data to upload 
     # + return - Data is uploaded to the staging tables in Zuora Revenue 
-    remote isolated function createUpload(CreateUploadHeaders headers, string[] payload) returns CreateUploadResponse|error {
+    remote isolated function createUpload(CreateUploadHeaders headers, string payload) returns CreateUploadResponse|error {
         string resourcePath = string `/v1/csv/upload`;
         map<string|string[]> httpHeaders = http:getHeaderMap(headers);
         http:Request request = new;
@@ -127,7 +127,7 @@ public isolated client class Client {
     # + headers - Headers to be sent with the request 
     # + queries - Queries to be sent with the request 
     # + return - BI view data is returned in CSV format 
-    remote isolated function getBiViews(string viewName, GetBiViewsHeaders headers, *GetBiViewsQueries queries) returns error? {
+    remote isolated function getBiViews(string viewName, GetBiViewsHeaders headers, *GetBiViewsQueries queries) returns byte[]|error? {
         string resourcePath = string `/v1/biviews/${getEncodedUri(viewName)}`;
         resourcePath = resourcePath + check getPathForQueryParam(queries);
         map<string|string[]> httpHeaders = http:getHeaderMap(headers);
@@ -141,7 +141,7 @@ public isolated client class Client {
     # + queries - Queries to be sent with the request 
     # + payload - List of field names to be selected from the BI view 
     # + return - BI view data is returned in CSV format 
-    remote isolated function getBiViewsForFields(string viewName, GetBiViewsForFieldsHeaders headers, string[] payload, *GetBiViewsForFieldsQueries queries) returns error? {
+    remote isolated function getBiViewsForFields(string viewName, GetBiViewsForFieldsHeaders headers, string[] payload, *GetBiViewsForFieldsQueries queries) returns byte[]|error? {
         string resourcePath = string `/v1/biviews/${getEncodedUri(viewName)}`;
         resourcePath = resourcePath + check getPathForQueryParam(queries);
         map<string|string[]> httpHeaders = http:getHeaderMap(headers);
@@ -189,7 +189,7 @@ public isolated client class Client {
     # + filename - The name of the report file to be downloaded
     # + headers - Headers to be sent with the request 
     # + return - The report file is returned 
-    remote isolated function downloadReport(string filename, DownloadReportHeaders headers) returns error? {
+    remote isolated function downloadReport(string filename, DownloadReportHeaders headers) returns byte[]|error? {
         string resourcePath = string `/v1/reports/download/${getEncodedUri(filename)}`;
         map<string|string[]> httpHeaders = http:getHeaderMap(headers);
         return self.clientEp->get(resourcePath, httpHeaders);
@@ -267,7 +267,7 @@ public isolated client class Client {
     # + headers - Headers to be sent with the request 
     # + queries - Queries to be sent with the request 
     # + return - The row count of the specified BI view is returned 
-    remote isolated function getBiViewRowCount(string tmplName, GetBiViewRowCountHeaders headers, *GetBiViewRowCountQueries queries) returns error? {
+    remote isolated function getBiViewRowCount(string tmplName, GetBiViewRowCountHeaders headers, *GetBiViewRowCountQueries queries) returns record {}|error {
         string resourcePath = string `/v2/biviews/count/${getEncodedUri(tmplName)}`;
         resourcePath = resourcePath + check getPathForQueryParam(queries);
         map<string|string[]> httpHeaders = http:getHeaderMap(headers);
@@ -292,7 +292,7 @@ public isolated client class Client {
     # + tmplName - Name of the BI view
     # + headers - Headers to be sent with the request 
     # + return - The list of columns is returned for the requested BI view 
-    remote isolated function listBiViewColumns(string tmplName, ListBiViewColumnsHeaders headers) returns error? {
+    remote isolated function listBiViewColumns(string tmplName, ListBiViewColumnsHeaders headers) returns record {}|error {
         string resourcePath = string `/v2/biviews/${getEncodedUri(tmplName)}/describe-columns`;
         map<string|string[]> httpHeaders = http:getHeaderMap(headers);
         return self.clientEp->get(resourcePath, httpHeaders);

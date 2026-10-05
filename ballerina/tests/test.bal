@@ -44,9 +44,11 @@ function testGetFileUploadStatus() returns error? {
 
 @test:Config {groups: ["mock_tests"]}
 function testUploadFile() returns error? {
+    byte[] fileContent = "SO_NUM,SO_LINE_NUM\nSO-1,1".toBytes();
     UploadFileResponse response = check zuoraClient->uploadFile(
         {token: authToken, templatename: "TRANSACTION_TEMPLATE", contentType: "multipart/form-data"},
-        {file: {fileContent: "SO_NUM,SO_LINE_NUM\nSO-1,1".toBytes(), fileName: "transactions.csv"}});
+        {file: {fileContent, fileName: "transactions.csv"}});
+    test:assertEquals(response.message, string `File received successfully, ${fileContent.length()} bytes`);
     test:assertEquals(response.status, "Success");
 }
 
@@ -60,7 +62,8 @@ function testGetUploadStatus() returns error? {
 function testCreateUpload() returns error? {
     CreateUploadResponse response = check zuoraClient->createUpload(
         {token: authToken, templatename: "TRANSACTION_TEMPLATE", filename: "transactions.csv"},
-        ["SO_NUM,SO_LINE_NUM", "SO-1,1"]);
+        "SO_NUM,SO_LINE_NUM\nSO-1,1");
+    test:assertEquals(response.result?.message, "Data Received, 2 lines");
     test:assertEquals(response.status, "Success");
     test:assertTrue(response.result?.id is int);
 }
@@ -100,7 +103,8 @@ function testListReports() returns error? {
 
 @test:Config {groups: ["mock_tests"]}
 function testDownloadReport() returns error? {
-    check zuoraClient->downloadReport("revenue_waterfall_2025_08.csv", {token: authToken});
+    byte[]? content = check zuoraClient->downloadReport("revenue_waterfall_2025_08.csv", {token: authToken});
+    test:assertEquals(content, "REP_NAME,STATUS\nRevenue Waterfall,Completed\n".toBytes());
 }
 
 @test:Config {groups: ["live_tests", "mock_tests"]}
@@ -142,12 +146,14 @@ function testCancelBiViewTask() returns error? {
 
 @test:Config {groups: ["live_tests", "mock_tests"]}
 function testGetBiViewRowCount() returns error? {
-    check zuoraClient->getBiViewRowCount("BI3_RC_POB", {token: authToken});
+    record {} count = check zuoraClient->getBiViewRowCount("BI3_RC_POB", {token: authToken});
+    test:assertTrue(count.length() > 0);
 }
 
 @test:Config {groups: ["live_tests", "mock_tests"]}
 function testListBiViewColumns() returns error? {
-    check zuoraClient->listBiViewColumns("BI3_RC_POB", {token: authToken});
+    record {} columns = check zuoraClient->listBiViewColumns("BI3_RC_POB", {token: authToken});
+    test:assertTrue(columns.length() > 0);
 }
 
 @test:Config {groups: ["mock_tests"]}
@@ -156,7 +162,7 @@ function testCreateCollectionJob() returns error? {
     test:assertEquals(response.success, true);
 }
 
-@test:Config {groups: ["live_tests", "mock_tests"]}
+@test:Config {groups: ["mock_tests"]}
 function testGetCollectionJob() returns error? {
     RevenueJobDetail response = check zuoraClient->getCollectionJob(3001);
     test:assertEquals(response.data?.id, 3001);
@@ -183,7 +189,7 @@ function testSubmitProgram() returns error? {
     test:assertEquals(response.success, true);
 }
 
-@test:Config {groups: ["live_tests", "mock_tests"]}
+@test:Config {groups: ["mock_tests"]}
 function testGetJobStatus() returns error? {
     JobStatusResponse response = check zuoraClient->getJobStatus(7001, 101);
     test:assertEquals(response.data?.id, 7001);

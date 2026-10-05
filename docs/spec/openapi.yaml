@@ -5,125 +5,7 @@ info:
     url: >-
       https://www.zuora.com/wp-content/uploads/2016/10/zuora-dev-logo-api-ref.svg
   version: '2025-08-06'
-  description: >
-
-    # Introduction
-
-
-
-    Welcome to the reference for Zuora Revenue REST API!
-
-
-
-    REST is a web-service protocol that lends itself to rapid development by
-
-    using everyday HTTP and JSON technology. Zuora Revenue provides various REST
-
-    APIs for data integration. Use these REST APIs to authenticate and integrate
-
-    data from the source ERP systems with Zuora Revenue.
-
-
-
-    All Zuora Revenue REST APIs are secured by using HTTPS. The authentication
-    scheme is token-based authentication,
-
-    which means an authenticated user must generate a token and then use it for
-    all subsequent APIs until the token expires.
-
-
-
-    This reference provides detailed descriptions about functions, requests, and
-    responses of each REST API.
-
-
-    Zuora Revenue REST APIs can be broadly classified into the following
-    categories:
-
-     * Authentication
-
-     * Inbound
-
-     * Outbound
-
-    **Remember:**
-
-
-     * The API service must be enabled for your tenant in the first place. Otherwise, the 405 error will be returned for every API request you submitted. To enable the API service, contact Zuora Revenue Support.
-
-     * Both the inbound and outbound operations require an authentication token to perform integration.
-    You can obtain the token by using the Authentication operation.
-
-     * You can find the Revenue object model on <a href="https://docs.zuora.com?resourceId=revenue-data-object-model" target="_blank">Zuora Revenue data object model</a>.
-
-
-    ## Endpoints
-
-
-    After the APIs are provisioned in Zuora Revenue Cloud, you can get the
-    endpoint and use that endpoint to call the APIs.
-
-
-
-
-    ## Requirements
-
-
-    Before you use the Zuora Revenue APIs, make sure the following requirements
-    are met:
-
-      * Zuora Revenue uses role based access control to restrict system access to authorized users.
-    To use the Zuora Revenue APIs, make sure that your user role has the
-    **Webservices Inbound**
-
-    and **Webservices Outbound** previleges in Zuora Revenue security settings.
-    For more information,
-
-    see <a href="https://docs.zuora.com?resourceId=revenue-user-mgmt-access"
-    target="_blank">Manage User Access</a>.
-      * To use the inbound operations to upload data into Zuora Revenue, the upload templates must be created by using the **File Upload** menu options in the Zuora Revenue UI.
-      Currently, the APIs support transaction upload, bundle upload, and event upload.
-      * To use the outbound operations, the outbound GL interface mapping must be set up in the Zuora Revenue UI (**Setups > Application > Interface Setup**).
-
-
-    ## Requests and Responses
-
-
-    Zuora Revenue APIs support the JSON format of HTTP responses. Inbound
-    operations for data upload support the CSV format only.
-
-
-
-    ## Inbound Data Error
-
-
-    All the inbound data into Zuora Revenue are first loaded into pre-stage
-    tables, namely CUST_UI tables in Zuora Revenue,
-
-    and then pushed to the corresponding staging tables from CUST_UI tables.
-
-
-
-    If the data fails in the CUST_UI tables, the entire batch of records will be
-    marked as `Failed`.
-
-    It means All or Nothing approach will be followed when data is being
-    inserted to the CUST_UI tables.
-
-    If the data has been successfully inserted into the CUST_UI tables, it will
-    then be automatically pushed to
-
-    the staging tables and no manual work is required.
-
-
-
-    Any uncollected data that remains in the staging tables can be manually
-    fixed or downloaded, and can be reposted from the upstream systems.
-
-
-
-    You can use the Stage Error operations to retrieve error information about
-    the uploaded data.
+  description: This is the client for the Zuora Revenue REST API, used to upload data, track uploads and staging errors, download BI view data and reports, transfer accounting batches, and submit and monitor revenue programs and data collection jobs.
 tags:
   - name: Authentication
     description: >
@@ -302,12 +184,14 @@ paths:
       parameters:
         - in: header
           name: role
+          description: The Zuora Revenue user role that the token is generated for, for example the API role
           required: true
           schema:
             type: string
             default: API Role
         - in: header
           name: clientname
+          description: The name of the client (application) that connects to Zuora Revenue
           required: true
           schema:
             type: string
@@ -586,10 +470,8 @@ paths:
         content:
           text/plain:
             schema:
-              type: array
-              items:
-                type: string
-                description: The actual data to be uploaded.
+              type: string
+              description: The actual data to be uploaded.
         required: true
       x-code-samples:
         - lang: Curl
@@ -772,7 +654,7 @@ paths:
             "https://yourHost/api/integration/v1/journal/batch/10000/1?Output=CSV"
       responses:
         '200':
-          description: Operation is successful.
+          description: The GL transfer batch data for the requested batch ID and page is returned
           content:
             application/json; charset=utf-8:
               schema:
@@ -871,6 +753,11 @@ paths:
       responses:
         '200':
           description: BI view data is returned in CSV format.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
         '204':
           description: No rows are found for the specified time period.
         '400':
@@ -886,8 +773,7 @@ paths:
         - BI Views v1
     post:
       operationId: POST_BIViews
-      description: |
-        Fetches data in a CSV or gzip file from BI View.
+      description: Downloads the data of selected fields from a BI view for the specified time period as a CSV or gzip file. The field names are passed in the request body.
       parameters:
         - in: header
           name: token
@@ -898,7 +784,7 @@ paths:
           schema:
             type: string
         - in: path
-          name: tmpl_name
+          name: view_name
           required: true
           description: Name of the BI view.
           schema:
@@ -945,7 +831,7 @@ paths:
             default: null
       requestBody:
         content:
-          application/json; charset=utf-8:
+          application/json:
             schema:
               description: A list of field names to be selected from the BI view.
               type: array
@@ -955,6 +841,11 @@ paths:
       responses:
         '200':
           description: BI view data is returned in CSV format.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
         '204':
           description: No rows are found for the given time period.
         '400':
@@ -989,7 +880,7 @@ paths:
             "https://yourHost/api/integration/v1/journal/list"
       responses:
         '200':
-          description: Operation is successful.
+          description: The list of available transfer accounting batches is returned
           content:
             application/json; charset=utf-8:
               schema:
@@ -1049,7 +940,7 @@ paths:
             "https://yourHost/api/integration/v1/download/transferbatchfile/10110"
       responses:
         '200':
-          description: Operation is successful.
+          description: The GL transfer batch file for the requested batch ID is returned
           content:
             application/json; charset=utf-8:
               schema:
@@ -1093,7 +984,7 @@ paths:
             "https://yourHost/api/integration/v1/reports/list?createddate=01-JAN-2012"
       responses:
         '200':
-          description: Operation is successful.
+          description: The list of reports created on the specified date is returned
           content:
             application/json; charset=utf-8:
               schema:
@@ -1162,7 +1053,12 @@ paths:
             "https://yourHost/api/integration/v1/reports/download/10002.csv"
       responses:
         '200':
-          description: Operation is successful. Report is downloaded.
+          description: The report file is returned
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
         '204':
           description: The specified file does not exist in Zuora Revenue.
       summary: Download a report
@@ -1249,7 +1145,7 @@ paths:
                   success:
                     description: Indicates whether the operation succeeded.
                     type: boolean
-      summary: Get report data
+      summary: Get report signed URL
       tags:
         - Reports
   /api/integration/v1/stage/error/{errortype}:
@@ -1403,7 +1299,7 @@ paths:
             curl -X GET https://ui_url/api/integration/v2/biviews-status -H
             'token:
             eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6IlNZU0FETUlOIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImNsaWVudG5hbWUiOiJEZWZhdWx0IiwiY2xpZW50aWQiOjEsImlhdCI6MTU1ODMyODMzNSwibmJmIjoxNTU4MzI4MzM1LCJpc3MiOiJadW9yYS1SSUEiLCJleHAiOjE1NTgzMzAxMzV9.xz3O4QRR6qgT-2HgBJn9yJ9YBaXwWhl3d7ohrduTogI'
-      summary: Get all task status
+      summary: Get all BI view task status
       tags:
         - BI Views v2
   /api/integration/v2/biviews-status/{task_id}:
@@ -1443,7 +1339,7 @@ paths:
             https://ui_url/api/integration/v2/biviews-status/098bda64-a53d-4e6c-960d-ffd2293b19bb
             -H 'token:
             eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6IlNZU0FETUlOIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImNsaWVudG5hbWUiOiJEZWZhdWx0IiwiY2xpZW50aWQiOjEsImlhdCI6MTU1ODMzMDIxMCwibmJmIjoxNTU4MzMwMjEwLCJpc3MiOiJadW9yYS1SSUEiLCJleHAiOjE1NTgzMzIwMTB9.Sr2oIxp7XWSJSy9bARfr7nkFvAmMbdhMaNBv9IR52Fo'
-      summary: Cancel task
+      summary: Cancel BI view download tasks
       tags:
         - BI Views v2
     get:
@@ -1558,6 +1454,11 @@ paths:
       responses:
         '200':
           description: The row count of the specified BI view is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
         '400':
           description: >-
             Error occurs. For example, the user ID is invalid, or the specified
@@ -1573,7 +1474,7 @@ paths:
             https://ui_url/api/integration/v2/biviews/count/BI3_ACCT_TYPE?=&clientId=1&fromDate=2016-07-26&toDate=2018-07-26
             -H 'token:
             eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6IlNZU0FETUlOIiwicm9sZSI6IlJldnBybyBBUEkgUm9sZSIsImNsaWVudG5hbWUiOiJEZWZhdWx0IiwiY2xpZW50aWQiOjEsImlhdCI6MTU1ODMzMDIxMCwibmJmIjoxNTU4MzMwMjEwLCJpc3MiOiJadW9yYS1SSUEiLCJleHAiOjE1NTgzMzIwMTB9.Sr2oIxp7XWSJSy9bARfr7nkFvAmMbdhMaNBv9IR52Fo
-      summary: Get row count
+      summary: Get BI view row count
       tags:
         - BI Views v2
   /api/integration/v2/biviews/{view_name}:
@@ -1675,20 +1576,9 @@ paths:
               - csv
               - gzip
             default: gzip
-      requestBody:
-        content:
-          application/json; charset=utf-8:
-            schema:
-              description: A list of field names to be retrieved for the BI view.
-              type: array
-              items:
-                type: string
-        required: true
       responses:
         '200':
-          description: >-
-            The queried BI view data is returned in the csv or gzip format
-            desired format.
+          description: The queried BI view data is returned as a CSV or gzip file
           headers:
             continuation-token:
               description: Continuation token to be used for subsequent page requests.
@@ -1699,7 +1589,7 @@ paths:
               schema:
                 type: string
           content:
-            application/json; charset=utf-8:
+            application/octet-stream:
               schema:
                 type: string
                 format: binary
@@ -1742,6 +1632,11 @@ paths:
       responses:
         '200':
           description: The list of columns is returned for the requested BI view.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
         '400':
           description: Error occurs. For example, the BI view does not exist.
         '401':
@@ -1781,7 +1676,7 @@ paths:
         API request will be rejected with error message returned.
       requestBody:
         content:
-          application/json; charset=utf-8:
+          application/json:
             schema:
               $ref: '#/components/schemas/RevenueJobRequest'
         required: true
@@ -1820,7 +1715,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: The request is submitted successfully.
+          description: The status of the data collection job is returned
           content:
             application/json; charset=utf-8:
               schema:
@@ -1900,7 +1795,7 @@ paths:
             type: integer
       requestBody:
         content:
-          application/json; charset=utf-8:
+          application/json:
             schema:
               $ref: '#/components/schemas/SubmitJobRequest'
         description: >
@@ -1943,7 +1838,7 @@ paths:
       parameters:
         - in: path
           name: jobId
-          description: The ID of the job.
+          description: The ID of the Zuora Revenue job whose status is queried. This is the job ID returned when the program was submitted
           required: true
           schema:
             type: integer
@@ -1967,6 +1862,10 @@ paths:
 servers:
   - url: https://yourHost
 components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
   schemas:
     JobStatusResponse:
       type: object

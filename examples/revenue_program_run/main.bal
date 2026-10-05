@@ -46,13 +46,20 @@ public function main() returns error? {
         return error("The submission did not return a job ID");
     }
 
-    // Step 4: Poll the job until it leaves the Pending / Running states.
+    // Step 4: Poll the job while it is Pending or Running. Only Completed counts as success; any other
+    // status (Error, Warning, Failed, Cancelled, Terminated, Incompatible) or a missing status is an error.
     foreach int attempt in 1 ... maxPolls {
         revenue:JobStatusResponse job = check revenueClient->getJobStatus(jobId, orgId);
         string? status = job.data?.status;
         io:println(string `Job ${jobId} status: ${status ?: "unknown"}`);
-        if status != "Pending" && status != "Running" {
+        if status is () {
+            return error(string `Job ${jobId} returned no status`);
+        }
+        if status == "Completed" {
             return;
+        }
+        if status != "Pending" && status != "Running" {
+            return error(string `Job ${jobId} ended with status ${status}`);
         }
         runtime:sleep(5);
     }

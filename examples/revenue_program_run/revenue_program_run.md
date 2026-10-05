@@ -1,6 +1,6 @@
 # Revenue program run
 
-This example authenticates against Zuora Revenue, confirms that a revenue program is available, and optionally submits it for an organization. It then polls the job until it leaves the pending and running states. The program is only submitted when `submitProgram` is set to `true`.
+This example authenticates against Zuora Revenue, confirms that a revenue program is available, and optionally submits it for an organization. It then polls the job while it is pending or running, and fails unless the job ends as `Completed`. The program is only submitted when `submitProgram` is set to `true`.
 
 ## Prerequisites
 
